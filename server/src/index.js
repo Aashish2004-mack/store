@@ -7,14 +7,57 @@ import { checkPassword, issueToken, requireAuth } from "./auth.js";
 import { createRazorpayOrder, verifySignature } from "./payments.js";
 
 const REQUIRED_ENV = ["JWT_SECRET", "ADMIN_PASSWORD_HASH", "RAZORPAY_KEY_ID", "RAZORPAY_KEY_SECRET"];
+const RECOMMENDED_ENV = ["CLIENT_ORIGIN"];
+
+// Validate required environment variables
 const missing = REQUIRED_ENV.filter((k) => !process.env[k]);
-if (missing.length) {
-  console.warn(`\n⚠️  Missing from server/.env: ${missing.join(", ")}`);
-  console.warn("The server will run, but login and payments won't work until these are set.\n");
+const missingRecommended = RECOMMENDED_ENV.filter((k) => !process.env[k]);
+
+if (missing.length || missingRecommended.length) {
+  console.warn("\n" + "=".repeat(70));
+  console.warn("⚠️  ENVIRONMENT CONFIGURATION WARNINGS");
+  console.warn("=".repeat(70));
+  
+  if (missing.length) {
+    console.warn(`\n❌ MISSING REQUIRED VARIABLES (server will not function correctly):`);
+    missing.forEach((key) => {
+      const hints = {
+        JWT_SECRET: "Generate with: node -e \"console.log(require('crypto').randomBytes(48).toString('hex'))\"",
+        ADMIN_PASSWORD_HASH: "Generate with: node scripts/hash-password.js \"your-password\"",
+        RAZORPAY_KEY_ID: "Get from Razorpay dashboard → Settings → API Keys",
+        RAZORPAY_KEY_SECRET: "Get from Razorpay dashboard → Settings → API Keys",
+      };
+      console.warn(`   • ${key}: ${hints[key] || "Not configured"}`);
+    });
+  }
+  
+  if (missingRecommended.length) {
+    console.warn(`\n⚠️  MISSING RECOMMENDED VARIABLES (CORS may fail in production):`);
+    missingRecommended.forEach((key) => {
+      if (key === "CLIENT_ORIGIN") {
+        console.warn(`   • CLIENT_ORIGIN: Set to your frontend URL (e.g., https://user.github.io/repo)`);
+        console.warn(`     Currently defaulting to: http://localhost:5173`);
+      }
+    });
+  }
+  
+  console.warn("\n" + "=".repeat(70));
+  if (missing.length) {
+    console.warn("❌ Login and payment functionality will NOT work without these variables.\n");
+  } else {
+    console.warn("✓ Server will run, but verify CLIENT_ORIGIN is correct for production.\n");
+  }
 }
 
 const app = express();
-app.use(cors({ origin: process.env.CLIENT_ORIGIN || "http://localhost:5173" }));
+const allowedOrigin = process.env.CLIENT_ORIGIN || "http://localhost:5173";
+app.use(cors({ 
+  origin: allowedOrigin,
+  credentials: true,
+  optionsSuccessStatus: 200,
+  methods: ["GET", "POST", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization"],
+}));
 app.use(express.json({ limit: "8mb" })); // cover images arrive as base64
 
 // Slows down password-guessing bots — a handful of tries per IP per window.
@@ -163,4 +206,8 @@ app.post("/api/payments/verify", (req, res) => {
 });
 
 const PORT = process.env.PORT || 4000;
-app.listen(PORT, () => console.log(`Manga store API running on http://localhost:${PORT}`));
+app.listen(PORT, () => {
+  console.log(`\n✓ Manga store API running on port ${PORT}`);
+  console.log(`  API endpoints: http://localhost:${PORT}/api`);
+  console.log(`  Accepting requests from: ${process.env.CLIENT_ORIGIN || "http://localhost:5173"}\n`);
+});

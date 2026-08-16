@@ -1,11 +1,4 @@
-cd /d d:\manga-store
-echo "# store" >> README.md
-git init
-git add README.md
-git commit -m "first commit"
-git branch -M main
-git remote add origin https://github.com/Aashish2004-mack/store.git
-git push -u origin mainnode_modules
+node_modules
 dist
 .env
 .env.local

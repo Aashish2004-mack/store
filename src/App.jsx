@@ -116,7 +116,8 @@ export default function MangaStore() {
       const books = await api.getCatalog();
       setCatalog(books);
     } catch (e) {
-      setLoadError("Couldn't reach the store server. Is it running on localhost:4000?");
+      const apiUrl = import.meta.env.VITE_API_URL || "http://localhost:4000/api";
+      setLoadError(`Couldn't reach the store server at ${apiUrl}. Please check the server is running and the API URL is correctly configured.`);
       setCatalog([]);
     }
     setLoading(false);
