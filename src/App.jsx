@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { api } from "./api";
+import Ludo from "./Ludo";
 
 const BLANK_FORM = { title: "", author: "", price: "", stock: "", cover: "", description: "", tag: "" };
 const BLANK_CUSTOMER = { name: "", phone: "", address: "", email: "" };
@@ -80,7 +81,7 @@ function Halftone({ style }) {
 }
 
 export default function MangaStore() {
-  const [view, setView] = useState("shop"); // shop | admin-login | admin
+  const [view, setView] = useState("shop"); // shop | admin-login | admin | ludo
   const [catalog, setCatalog] = useState(null);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState("");
@@ -374,9 +375,19 @@ export default function MangaStore() {
           <span style={{ fontFamily: displayFont, fontSize: "20px", letterSpacing: "0.04em" }}>KAMIDAMASHII</span>
         </button>
         <div style={{ display: "flex", gap: "14px", alignItems: "center" }}>
+          {view !== "admin" && view !== "admin-login" && view !== "ludo" && (
+            <button onClick={() => setView("ludo")} style={{ background: "none", border: "1px solid #F3EFE4", color: "#F3EFE4", padding: "6px 12px", borderRadius: 3, fontSize: 13 }}>
+              🎲 Ludo
+            </button>
+          )}
           {view !== "admin" && view !== "admin-login" && (
             <button onClick={() => setView(adminToken ? "admin" : "admin-login")} style={{ background: "none", border: "1px solid #F3EFE4", color: "#F3EFE4", padding: "6px 12px", borderRadius: 3, fontSize: 13 }}>
               Shelf keeper
+            </button>
+          )}
+          {view === "ludo" && (
+            <button onClick={() => setView("shop")} style={{ background: "none", border: "1px solid #F3EFE4", color: "#F3EFE4", padding: "6px 12px", borderRadius: 3, fontSize: 13 }}>
+              View shop
             </button>
           )}
           {view === "admin" && (
@@ -547,6 +558,9 @@ export default function MangaStore() {
           </div>
         </div>
       )}
+
+      {/* ---------- LUDO ---------- */}
+      {view === "ludo" && <Ludo displayFont={displayFont} inkFont={inkFont} onBack={() => setView("shop")} />}
 
       {/* ---------- ADMIN LOGIN ---------- */}
       {view === "admin-login" && (
